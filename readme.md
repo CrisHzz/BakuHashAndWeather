@@ -1,0 +1,1 @@
+# Baku city prediction using math models and hash data
