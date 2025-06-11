@@ -78,11 +78,3 @@ def predecir_temp_maxima(datos_3dias):
             "Explication": explicacion
         }]
     }
-
-datos_3dias = [
-    (24.0, 15.0, 8.0),  # Día 1
-    (26.0, 16.0, 7.5),  # Día 2
-    (25.0, 17.0, 6.5)   # Día 3
-]
-prediccion = predecir_temp_maxima(datos_3dias)
-print(prediccion)

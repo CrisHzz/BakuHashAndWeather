@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BakuHashAndWeather</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="flag-stripe blue"></div>
+            <div class="flag-stripe red"></div>
+            <div class="flag-stripe green"></div>
+            <h1 class="title">
+                <span class="baku-text">Baku</span>
+                <span class="hash-text">Hash</span>
+                <span class="and-text">And</span>
+                <span class="baku-text">Weather <img src="https://vectorflags.s3.amazonaws.com/flags/az-flag-01.png" width="100"></span>
+            </h1>
+            <p class="subtitle">Predicción del Clima de Bakú y cifrado de datos</p>
+        </header>
+
+        <main class="main-content">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Datos Históricos del Clima</h2>
+                    <p>Ingresa los datos de los últimos 3 días para generar la predicción</p>
+                </div>
+
+                <form class="weather-form" id="weatherForm">
+                    <!-- Día 1 -->
+                    <div class="day-section">
+                        <h3 class="day-title">
+                            <span class="day-number">1</span>
+                            Hace 3 días
+                        </h3>
+                        <div class="input-group">
+                            <div class="input-field">
+                                <label for="day1-max">Temperatura Máxima (°C)</label>
+                                <input type="number" id="day1-max" name="day1-max" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">🌡️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day1-min">Temperatura Mínima (°C)</label>
+                                <input type="number" id="day1-min" name="day1-min" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">❄️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day1-sun">Horas de Sol</label>
+                                <input type="number" id="day1-sun" name="day1-sun" min="0" max="24" step="0.1" required>
+                                <span class="input-icon">☀️</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Día 2 -->
+                    <div class="day-section">
+                        <h3 class="day-title">
+                            <span class="day-number">2</span>
+                            Hace 2 días
+                        </h3>
+                        <div class="input-group">
+                            <div class="input-field">
+                                <label for="day2-max">Temperatura Máxima (°C)</label>
+                                <input type="number" id="day2-max" name="day2-max" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">🌡️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day2-min">Temperatura Mínima (°C)</label>
+                                <input type="number" id="day2-min" name="day2-min" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">❄️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day2-sun">Horas de Sol</label>
+                                <input type="number" id="day2-sun" name="day2-sun" min="0" max="24" step="0.1" required>
+                                <span class="input-icon">☀️</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Día 3 -->
+                    <div class="day-section">
+                        <h3 class="day-title">
+                            <span class="day-number">3</span>
+                            Ayer
+                        </h3>
+                        <div class="input-group">
+                            <div class="input-field">
+                                <label for="day3-max">Temperatura Máxima (°C)</label>
+                                <input type="number" id="day3-max" name="day3-max" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">🌡️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day3-min">Temperatura Mínima (°C)</label>
+                                <input type="number" id="day3-min" name="day3-min" min="-20" max="50" step="0.1" required>
+                                <span class="input-icon">❄️</span>
+                            </div>
+                            <div class="input-field">
+                                <label for="day3-sun">Horas de Sol</label>
+                                <input type="number" id="day3-sun" name="day3-sun" min="0" max="24" step="0.1" required>
+                                <span class="input-icon">☀️</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="predict-btn">
+                            <span>🔮</span>
+                            Generar Predicción
+                        </button>
+                        <button type="reset" class="reset-btn">
+                            <span>🔄</span>
+                            Limpiar Datos
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="cultural-elements">
+                <span class="element">🏛️ Patrimonio de Bakú</span>
+                <span class="element">🔥 Torres de la Llama</span>
+                <span class="element">🌊 Mar Caspio</span>
+            </div>
+            <p>&copy; 2024 BakuHashAndWeather - Predicción del Clima de Azerbaiyán</p>
+        </footer>
+    </div>
+
+    <!-- Modal para mostrar resultados -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="resultContent">
+                <!-- Los resultados se mostrarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('weatherForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Obtener todos los datos del formulario
+            const formData = new FormData(this);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // Mostrar indicador de carga
+            const submitBtn = document.querySelector('.predict-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>⏳</span> Generando Predicción...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Enviar datos al servidor
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(result);
+                } else {
+                    showError(result.error || 'Error en la predicción');
+                }
+                
+            } catch (error) {
+                showError('Error de conexión: ' + error.message);
+            } finally {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function showResult(result) {
+            const prediction = result.Prediction[0];
+            const modal = document.getElementById('resultModal');
+            const content = document.getElementById('resultContent');
+            
+            content.innerHTML = `
+                <div class="result-header">
+                    <h2>🔮 Predicción del Clima</h2>
+                    <p>Bakú, Azerbaiyán</p>
+                </div>
+                <div class="prediction-card">
+                    <div class="temp-display">
+                        <span class="temp-number">${prediction.temperature_Prediction}°C</span>
+                        <span class="temp-label">Temperatura Máxima Predicha</span>
+                    </div>
+                    <div class="weather-info">
+                        <div class="weather-type">
+                            <span class="weather-icon">${getWeatherIcon(prediction.estimated_weather)}</span>
+                            <span class="weather-text">${prediction.estimated_weather}</span>
+                        </div>
+                        <div class="explanation">
+                            <p>${prediction.Explication}</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="close-btn">
+                    <span>✅</span> Entendido
+                </button>
+                <div class="json-section">
+                    <h3>📋 JSON de Respuesta</h3>
+                    <div class="json-container">
+                        <pre id="jsonOutput">${JSON.stringify(result, null, 2)}</pre>
+                        <button onclick="copyToClipboard()" class="copy-btn">
+                            <span>📋</span> Copiar JSON
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+        
+        function showError(message) {
+            const modal = document.getElementById('resultModal');
+            const content = document.getElementById('resultContent');
+            
+            content.innerHTML = `
+                <div class="error-content">
+                    <h2>❌ Error</h2>
+                    <p>${message}</p>
+                    <button onclick="closeModal()" class="close-btn error">
+                        <span>🔄</span> Intentar Nuevamente
+                    </button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+        
+        function getWeatherIcon(weather) {
+            switch(weather.toLowerCase()) {
+                case 'caluroso': return '🌞';
+                case 'templado': return '🌤️';
+                case 'fresco': return '🌥️';
+                default: return '🌤️';
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+        
+        function copyToClipboard() {
+            const jsonText = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(jsonText).then(function() {
+                // Cambiar el texto del botón temporalmente
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> ¡Copiado!';
+                btn.style.background = 'linear-gradient(45deg, #00AA00, #00CC33)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Error al copiar: ', err);
+                alert('Error al copiar al portapapeles');
+            });
+        }
+        
+        // Cerrar modal al hacer clic fuera de él
+        window.onclick = function(event) {
+            const modal = document.getElementById('resultModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Cerrar modal con la X
+        document.querySelector('.close').onclick = function() {
+            closeModal();
+        }
+    </script>
+</body>
+</html>
