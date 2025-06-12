@@ -63,18 +63,17 @@ def predecir_temp_maxima(datos_3dias):
     # Determinar el tipo de clima basado en la temperatura predicha
     if temp_pred >= 30:
         clima = "Caluroso"
-        explicacion = "Se espera un día muy caluroso, se recomienda mantenerse hidratado y evitar exposición prolongada al sol"
     elif temp_pred >= 20:
         clima = "Templado"
-        explicacion = "Se espera un día agradable con temperatura moderada"
-    else:
+    elif temp_pred >= 15:
         clima = "Fresco"
-        explicacion = "Se espera un día fresco, se recomienda llevar ropa abrigada"
-        
+    elif temp_pred >= 10:
+        clima = "Frío"
+    elif temp_pred >= 5:
+        clima = "Muy Frío"
+    else:
+        clima = "Helado"
     return {
-        "Prediction": [{
-            "temperature_Prediction": round(temp_pred, 2),
-            "estimated_weather": clima,
-            "Explication": explicacion
-        }]
+        "temp": round(temp_pred, 2),
+        "weather": clima
     }

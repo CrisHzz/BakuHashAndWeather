@@ -117,6 +117,46 @@
                     </div>
                 </form>
             </div>
+
+            <!-- Sección de Hasheo -->
+            <div class="form-container hash-section">
+                <div class="form-header">
+                    <h2>🔐 Encriptación y Hasheo</h2>
+                    <p>Ingresa un JSON para generar su hash criptográfico</p>
+                </div>
+
+                <form class="hash-form" id="hashForm">
+                    <div class="hash-input-section">
+                        <div class="input-field">
+                            <label for="jsonInput">JSON a Hashear</label>
+                            <textarea 
+                                id="jsonInput" 
+                                name="jsonInput" 
+                                placeholder='{"ejemplo": "Tu JSON aquí... (máximo 120 caracteres)"}'
+                                rows="8"
+                                required></textarea>
+                            <span class="input-icon">📄</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="hash-btn">
+                            <span>🔐</span>
+                            Cifrar JSON
+                        </button>
+                        
+                        <button type="button" class="decrypt-btn" id="decryptBtn" style="display: none;">
+                            <span>🔓</span>
+                            Descifrar
+                        </button>
+                        
+                        <button type="reset" class="reset-btn">
+                            <span>🔄</span>
+                            Limpiar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </main>
 
         <footer class="footer">
@@ -185,9 +225,11 @@
         });
         
         function showResult(result) {
-            const prediction = result.Prediction[0];
             const modal = document.getElementById('resultModal');
             const content = document.getElementById('resultContent');
+            
+            // Generar explicación basándose en la temperatura predicha
+            const explanation = generateExplanation(result.temp, result.weather);
             
             content.innerHTML = `
                 <div class="result-header">
@@ -196,16 +238,16 @@
                 </div>
                 <div class="prediction-card">
                     <div class="temp-display">
-                        <span class="temp-number">${prediction.temperature_Prediction}°C</span>
+                        <span class="temp-number">${result.temp}°C</span>
                         <span class="temp-label">Temperatura Máxima Predicha</span>
                     </div>
                     <div class="weather-info">
                         <div class="weather-type">
-                            <span class="weather-icon">${getWeatherIcon(prediction.estimated_weather)}</span>
-                            <span class="weather-text">${prediction.estimated_weather}</span>
+                            <span class="weather-icon">${getWeatherIcon(result.weather)}</span>
+                            <span class="weather-text">${result.weather}</span>
                         </div>
                         <div class="explanation">
-                            <p>${prediction.Explication}</p>
+                            <p>${explanation}</p>
                         </div>
                     </div>
                 </div>
@@ -248,7 +290,26 @@
                 case 'caluroso': return '🌞';
                 case 'templado': return '🌤️';
                 case 'fresco': return '🌥️';
+                case 'frío': return '❄️';
+                case 'muy frío': return '🥶';
+                case 'helado': return '🧊';
                 default: return '🌤️';
+            }
+        }
+        
+        function generateExplanation(temperature, weather) {
+            if (temperature >= 30) {
+                return "Se espera un día muy caluroso, se recomienda mantenerse hidratado y evitar exposición prolongada al sol";
+            } else if (temperature >= 20) {
+                return "Se espera un día agradable con temperatura moderada";
+            } else if (temperature >= 15) {
+                return "Se espera un día fresco, se recomienda llevar ropa ligera";
+            } else if (temperature >= 10) {
+                return "Se espera un día frío, se recomienda abrigarse bien";
+            } else if (temperature >= 5) {
+                return "Se espera un día muy frío, se recomienda abrigarse muy bien y evitar exposición prolongada";
+            } else {
+                return "Se espera un día helado, se recomienda extremar precauciones y evitar salir si es posible";
             }
         }
         
@@ -287,6 +348,251 @@
         document.querySelector('.close').onclick = function() {
             closeModal();
         }
+
+        // Variables globales para almacenar datos de cifrado
+        let encryptedData = null;
+
+        // Manejar formulario de hash/cifrado
+        document.getElementById('hashForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const jsonInput = formData.get('jsonInput');
+            
+            // Validar que el JSON sea válido y no sea demasiado largo
+            try {
+                JSON.parse(jsonInput);
+            } catch (error) {
+                showHashError('El texto ingresado no es un JSON válido');
+                return;
+            }
+            
+            // Validar tamaño del JSON
+            if (jsonInput.length > 120) {
+                showHashError(`El JSON es demasiado largo (${jsonInput.length} caracteres). Máximo permitido: 120 caracteres.`);
+                return;
+            }
+            
+            // Mostrar indicador de carga
+            const submitBtn = document.querySelector('.hash-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>⏳</span> Cifrando...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Agregar timeout de 30 segundos
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const response = await fetch('/encrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ jsonInput: jsonInput }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // Verificar que la respuesta sea válida antes de procesarla
+                const responseText = await response.text();
+                let result;
+                
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Error parsing JSON:', parseError);
+                    console.error('Response text:', responseText);
+                    showHashError(`Error de formato en la respuesta del servidor: ${parseError.message}`);
+                    return;
+                }
+                
+                if (response.ok) {
+                    encryptedData = result;
+                    showHashResult(result, 'encrypt');
+                    // Mostrar botón de descifrado
+                    document.getElementById('decryptBtn').style.display = 'inline-block';
+                } else {
+                    showHashError(result.error || 'Error en el cifrado');
+                }
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showHashError('Timeout: El proceso de cifrado está tomando demasiado tiempo. Intenta con un JSON más pequeño (máximo 120 caracteres).');
+                } else {
+                    showHashError('Error de conexión: ' + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Manejar botón de descifrado
+        document.getElementById('decryptBtn').addEventListener('click', async function() {
+            if (!encryptedData) {
+                showHashError('No hay datos cifrados para descifrar');
+                return;
+            }
+            
+            const submitBtn = this;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>⏳</span> Descifrando...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/decrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coefficients: encryptedData.encrypted_coefficients,
+                        x_data: encryptedData.x_data,
+                        y_data: encryptedData.y_data  // Incluir datos originales para descifrado estable
+                    })
+                });
+                
+                // Verificar que la respuesta sea válida antes de procesarla
+                const responseText = await response.text();
+                let result;
+                
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Error parsing JSON en decrypt:', parseError);
+                    console.error('Response text:', responseText);
+                    showHashError(`Error de formato en la respuesta del servidor: ${parseError.message}`);
+                    return;
+                }
+                
+                if (response.ok) {
+                    showHashResult(result, 'decrypt');
+                } else {
+                    showHashError(result.error || 'Error en el descifrado');
+                }
+                
+            } catch (error) {
+                showHashError('Error de conexión: ' + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showHashResult(result, type) {
+            const modal = document.getElementById('resultModal');
+            const content = document.getElementById('resultContent');
+            
+            let htmlContent = '';
+            
+            if (type === 'encrypt') {
+                htmlContent = `
+                    <div class="result-header">
+                        <h2>🔐 Cifrado Completado</h2>
+                        <p>Tu JSON ha sido cifrado exitosamente</p>
+                    </div>
+                    <div class="hash-result-card">
+                        <div class="original-section">
+                            <h3>📄 JSON Original</h3>
+                            <div class="json-container">
+                                <pre>${JSON.stringify(JSON.parse(result.original_message), null, 2)}</pre>
+                            </div>
+                        </div>
+                        <div class="encrypted-section">
+                            <h3>🔐 Coeficientes Cifrados</h3>
+                            <div class="coefficients-container">
+                                <pre>${JSON.stringify(result.encrypted_coefficients, null, 2)}</pre>
+                            </div>
+                        </div>
+                        <div class="info-section">
+                            <h3>📊 Información del Cifrado</h3>
+                            <p><strong>Puntos de interpolación:</strong> ${JSON.stringify(result.x_data)}</p>
+                            <p><strong>Número de coeficientes:</strong> ${result.encrypted_coefficients.length}</p>
+                            <p><strong>Estado:</strong> ${result.message}</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" class="close-btn">
+                        <span>✅</span> Entendido
+                    </button>
+                `;
+            } else if (type === 'decrypt') {
+                htmlContent = `
+                    <div class="result-header">
+                        <h2>🔓 Descifrado Completado</h2>
+                        <p>El mensaje ha sido descifrado exitosamente</p>
+                    </div>
+                    <div class="hash-result-card">
+                        <div class="decrypted-section">
+                            <h3>📄 JSON Descifrado</h3>
+                            <div class="json-container">
+                                <pre>${JSON.stringify(JSON.parse(result.decrypted_message), null, 2)}</pre>
+                            </div>
+                        </div>
+                        <div class="info-section">
+                            <h3>✅ Resultado</h3>
+                            <p><strong>Estado:</strong> ${result.message}</p>
+                            <p><strong>Integridad:</strong> Mensaje recuperado correctamente</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" class="close-btn">
+                        <span>✅</span> Entendido
+                    </button>
+                    <div class="json-section">
+                        <div class="json-container">
+                            <button onclick="copyHashToClipboard()" class="copy-btn">
+                                <span>📋</span> Copiar JSON Descifrado
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = htmlContent;
+            modal.style.display = 'block';
+        }
+        
+        function showHashError(message) {
+            const modal = document.getElementById('resultModal');
+            const content = document.getElementById('resultContent');
+            
+            content.innerHTML = `
+                <div class="error-content">
+                    <h2>❌ Error de Cifrado</h2>
+                    <p>${message}</p>
+                    <button onclick="closeModal()" class="close-btn error">
+                        <span>🔄</span> Intentar Nuevamente
+                    </button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function copyHashToClipboard() {
+            const jsonText = document.querySelector('.decrypted-section pre').textContent;
+            navigator.clipboard.writeText(jsonText).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> ¡Copiado!';
+                btn.style.background = 'linear-gradient(45deg, #00AA00, #00CC33)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Error al copiar: ', err);
+                alert('Error al copiar al portapapeles');
+            });
+        }
+
+        // Limpiar datos de cifrado al resetear el formulario
+        document.querySelector('.hash-form .reset-btn').addEventListener('click', function() {
+            encryptedData = null;
+            document.getElementById('decryptBtn').style.display = 'none';
+        });
     </script>
 </body>
 </html>
